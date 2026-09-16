@@ -239,8 +239,40 @@ class _DeviceSettingsState extends State<DeviceSettings> {
     return KeyedSubtree(key: key, child: content);
   }
 
+  void _showRenameDeviceDialog() {
+    final controller = TextEditingController(text: SharedPreferencesUtil().deviceName ?? '');
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Rename device'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(hintText: 'Omi'),
+          maxLength: 30,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              final newName = controller.text.trim();
+              if (newName.isNotEmpty) {
+                SharedPreferencesUtil().deviceName = newName;
+                setState(() {});
+              }
+              Navigator.pop(context);
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildDeviceInfoSection(BtDevice? device, DeviceProvider provider) {
-    final deviceName = device?.name ?? 'Omi DevKit';
+    final deviceName = SharedPreferencesUtil().deviceName ?? device?.name ?? 'Omi DevKit';
     final deviceId = device?.id ?? '12AB34CD:56EF78GH';
     const firmwarePolicy = FirmwareUpdateBuildPolicy.current;
     final isOpenGlass = firmwarePolicy.isOpenGlassDevice(device);
@@ -261,8 +293,8 @@ class _DeviceSettingsState extends State<DeviceSettings> {
             icon: FontAwesomeIcons.microchip,
             title: context.l10n.deviceName,
             chipValue: deviceName,
-            copyValue: deviceName,
             showChevron: false,
+            onTap: _showRenameDeviceDialog,
           ),
           const Divider(height: 1, color: Color(0xFF3C3C43)),
           _buildProfileStyleItem(
